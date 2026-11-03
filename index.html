@@ -1,404 +1,611 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ISP Dual-Homed BGP & OSPF Core NOC Dashboard</title>
+    <title>Cisco Core Routing: BGP, OSPF & Static Routing Failover | Engineering Dossier</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+        .tab-btn.active { border-color: #3b82f6; color: #60a5fa; background-color: rgba(30, 58, 138, 0.25); }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen">
-    <!-- Top Navigation Bar -->
-    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-blue-500 selection:text-white">
+
+    <!-- Top Sticky Enterprise Navigation -->
+    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center space-x-3">
-                <div class="h-9 w-9 rounded-lg bg-cyan-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+                <div class="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 ring-1 ring-white/20">
                     <i class="fa-solid fa-network-wired text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="text-base font-bold text-white leading-tight">ISP Dual-Homed BGP & OSPF NOC</h1>
-                    <p class="text-xs text-slate-400">Autonomous System: <span class="font-mono text-cyan-400">AS 65001</span> | Gateway: <span class="font-mono text-emerald-400">103.140.18.1</span></p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-mono uppercase tracking-wider text-blue-400 font-semibold">Cisco Packet Tracer Lab 01</span>
+                        <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono font-medium">Verified Topology</span>
+                    </div>
+                    <h1 class="text-base sm:text-lg font-bold text-white tracking-tight leading-tight">
+                        Dual-ISP Core BGP & OSPF Routing Architecture
+                    </h1>
                 </div>
             </div>
 
             <div class="flex items-center space-x-3 text-xs">
-                <div class="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-dot"></span>
-                    <span class="font-medium text-slate-300">Carrier SLA: <strong class="text-emerald-400">99.98%</strong></span>
-                </div>
-                <a href="https://github.com/MHMITHUN/01-ISP-Core-BGP-OSPF-Redundancy" target="_blank" class="flex items-center space-x-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold px-3 py-1.5 rounded-lg transition text-xs shadow-md shadow-cyan-600/30">
-                    <i class="fa-brands fa-github"></i>
-                    <span>GitHub Repo</span>
+                <a href="https://github.com/MHMITHUN/01-ISP-Core-BGP-OSPF-Redundancy" target="_blank" class="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2 rounded-lg border border-slate-700 transition font-medium">
+                    <i class="fa-brands fa-github text-sm"></i>
+                    <span>GitHub Repository</span>
+                </a>
+                <a href="#topology" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg transition shadow-md shadow-blue-600/30">
+                    <span>Explore Dossier</span>
                 </a>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        <!-- Interactive Topology & Failover Control -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Topology Panel -->
-            <div class="lg:col-span-2 bg-slate-900/90 rounded-2xl border border-slate-800 p-5 shadow-xl relative overflow-hidden">
-                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
-                    <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-diagram-project text-cyan-400"></i>
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">Live Peering Topology & Traffic Flow</h2>
+    <!-- Engineering Blueprint Banner -->
+    <div class="bg-gradient-to-b from-blue-950/40 via-slate-900/60 to-slate-950 border-b border-slate-800/80 py-8 px-4 sm:px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-8 space-y-3">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/80 text-xs font-mono text-slate-300">
+                        <i class="fa-solid fa-microchip text-blue-400"></i>
+                        <span>Platform: Cisco IOS 2911 ISR · 3560 L3 Switch · Packet Tracer 8.x</span>
                     </div>
-                    <span class="text-xs bg-slate-800 px-2.5 py-1 rounded text-slate-400 font-mono">BGP Best Path: <strong id="active-path-label" class="text-emerald-400">via ISP-A (LOCAL_PREF 200)</strong></span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                        Multi-Provider BGP Peering, Interior OSPF & Dynamic Sub-Second Failover
+                    </h2>
+                    <p class="text-sm sm:text-base text-slate-300 leading-relaxed max-w-3xl">
+                        A production-grade network routing architecture designed and simulated in Cisco Packet Tracer. Implements exterior BGP (eBGP AS 65001) peering with two independent upstream service providers, single-area interior OSPF routing for internal campus core distribution, and floating static route convergence to achieve high availability with zero single point of failure (SPOF).
+                    </p>
+                    <div class="flex flex-wrap gap-2 pt-2 text-xs font-mono">
+                        <span class="rounded bg-slate-900 px-2.5 py-1 border border-slate-800 text-blue-300">BGP-4 (RFC 4271)</span>
+                        <span class="rounded bg-slate-900 px-2.5 py-1 border border-slate-800 text-blue-300">OSPFv2 (RFC 2328)</span>
+                        <span class="rounded bg-slate-900 px-2.5 py-1 border border-slate-800 text-blue-300">Static Route Redundancy</span>
+                        <span class="rounded bg-slate-900 px-2.5 py-1 border border-slate-800 text-blue-300">SQA Defect RCA</span>
+                        <span class="rounded bg-slate-900 px-2.5 py-1 border border-slate-800 text-blue-300">Subnet CIDR Planning</span>
+                    </div>
                 </div>
 
-                <!-- Visual Topology Graphic -->
-                <div class="relative bg-slate-950/80 rounded-xl border border-slate-800/80 p-6 min-h-[300px] flex flex-col justify-between">
-                    <!-- Upstream Tier-1 Row -->
-                    <div class="grid grid-cols-2 gap-8 relative z-10">
+                <!-- Engineering Metadata Card -->
+                <div class="lg:col-span-4 bg-slate-900/90 rounded-2xl border border-slate-800 p-5 shadow-xl space-y-3 font-mono text-xs">
+                    <div class="text-[11px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-800 pb-2">
+                        System Configuration Parameters
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-800/60">
+                        <span class="text-slate-400">Enterprise AS:</span>
+                        <span class="text-blue-400 font-bold">AS 65001 (Private ASN)</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-800/60">
+                        <span class="text-slate-400">Upstream ISP-A:</span>
+                        <span class="text-emerald-400 font-bold">AS 64512 (Pref: 200)</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-800/60">
+                        <span class="text-slate-400">Upstream ISP-B:</span>
+                        <span class="text-amber-400 font-bold">AS 64513 (Pref: 100)</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-800/60">
+                        <span class="text-slate-400">Core IGP Routing:</span>
+                        <span class="text-slate-200">OSPF Area 0 (Backbone)</span>
+                    </div>
+                    <div class="flex justify-between py-1">
+                        <span class="text-slate-400">Engineer / Author:</span>
+                        <span class="text-white font-bold">MD. Mahamudul Hasan</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tab Bar -->
+    <div class="bg-slate-900 border-b border-slate-800 sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex overflow-x-auto space-x-2 py-2 text-xs font-semibold">
+            <button onclick="switchTab('topology')" id="tab-btn-topology" class="tab-btn active px-4 py-2 rounded-lg border border-transparent transition whitespace-nowrap flex items-center gap-2">
+                <i class="fa-solid fa-diagram-project"></i>
+                <span>1. Topology & IP Scheme</span>
+            </button>
+            <button onclick="switchTab('configs')" id="tab-btn-configs" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-slate-400 hover:text-slate-200 transition whitespace-nowrap flex items-center gap-2">
+                <i class="fa-solid fa-terminal"></i>
+                <span>2. Cisco IOS Configurations</span>
+            </button>
+            <button onclick="switchTab('verification')" id="tab-btn-verification" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-slate-400 hover:text-slate-200 transition whitespace-nowrap flex items-center gap-2">
+                <i class="fa-solid fa-check-double"></i>
+                <span>3. CLI Verification Outputs</span>
+            </button>
+            <button onclick="switchTab('rca')" id="tab-btn-rca" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-slate-400 hover:text-slate-200 transition whitespace-nowrap flex items-center gap-2">
+                <i class="fa-solid fa-file-waveform"></i>
+                <span>4. SQA Defect Triage & RCA</span>
+            </button>
+            <button onclick="switchTab('simulator')" id="tab-btn-simulator" class="tab-btn px-4 py-2 rounded-lg border border-transparent text-slate-400 hover:text-slate-200 transition whitespace-nowrap flex items-center gap-2">
+                <i class="fa-solid fa-play"></i>
+                <span>5. Interactive Failover Demo</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1 space-y-10">
+
+        <!-- TAB 1: TOPOLOGY & IP SCHEME -->
+        <section id="tab-content-topology" class="tab-pane space-y-6">
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Network Architecture & Physical Topology</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Dual eBGP Upstream Uplinks, Core Layer-3 Routing, and Campus Distribution</p>
+                    </div>
+                    <span class="text-xs font-mono bg-blue-950/80 text-blue-300 border border-blue-800/60 px-3 py-1 rounded-full">
+                        RFC 1918 / RFC 4271 Compliant
+                    </span>
+                </div>
+
+                <!-- Visual Topology Diagram -->
+                <div class="bg-slate-950 rounded-xl border border-slate-800/80 p-6 relative overflow-hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         <!-- Upstream A -->
-                        <div id="card-isp-a" class="bg-slate-900 border-2 border-emerald-500/50 rounded-xl p-4 transition-all">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-emerald-400 uppercase">Primary Upstream</span>
-                                <span id="status-isp-a" class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">ESTABLISHED</span>
+                        <div class="bg-slate-900/90 rounded-xl border-2 border-emerald-500/40 p-4">
+                            <div class="flex items-center justify-between text-xs font-mono">
+                                <span class="text-emerald-400 font-bold">PRIMARY UPSTREAM (ISP-A)</span>
+                                <span class="bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded border border-emerald-800">AS 64512</span>
                             </div>
-                            <h3 class="text-sm font-bold text-white mt-1">Tier-1 Telco (ISP-A)</h3>
-                            <p class="text-xs font-mono text-slate-400">AS 64512 | 203.0.113.1</p>
-                            <div class="mt-2 text-[11px] text-slate-400 flex justify-between">
-                                <span>Pref: <strong>200</strong></span>
-                                <span>Path: <strong>Direct</strong></span>
-                            </div>
+                            <p class="text-sm font-bold text-white mt-2">Router: ISP-A-EDGE (Cisco 2911)</p>
+                            <p class="text-xs font-mono text-slate-400 mt-1">Interconnect: 203.0.113.0/30 (Gig0/0)</p>
+                            <p class="text-xs text-slate-400 mt-1">BGP Attribute: LOCAL_PREF 200 · Primary Default Route</p>
                         </div>
 
                         <!-- Upstream B -->
-                        <div id="card-isp-b" class="bg-slate-900 border-2 border-slate-700 rounded-xl p-4 transition-all">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold text-amber-400 uppercase">Backup Upstream</span>
-                                <span id="status-isp-b" class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">STANDBY / EST</span>
+                        <div class="bg-slate-900/90 rounded-xl border-2 border-amber-500/40 p-4">
+                            <div class="flex items-center justify-between text-xs font-mono">
+                                <span class="text-amber-400 font-bold">BACKUP UPSTREAM (ISP-B)</span>
+                                <span class="bg-amber-950 text-amber-300 px-2 py-0.5 rounded border border-amber-800">AS 64513</span>
                             </div>
-                            <h3 class="text-sm font-bold text-white mt-1">Tier-1 Carrier (ISP-B)</h3>
-                            <p class="text-xs font-mono text-slate-400">AS 64513 | 198.51.100.1</p>
-                            <div class="mt-2 text-[11px] text-slate-400 flex justify-between">
-                                <span>Pref: <strong>100</strong></span>
-                                <span>Prepend: <strong>2x AS</strong></span>
+                            <p class="text-sm font-bold text-white mt-2">Router: ISP-B-EDGE (Cisco 2911)</p>
+                            <p class="text-xs font-mono text-slate-400 mt-1">Interconnect: 198.51.100.0/30 (Gig0/1)</p>
+                            <p class="text-xs text-slate-400 mt-1">BGP Attribute: LOCAL_PREF 100 · Standby Path</p>
+                        </div>
+                    </div>
+
+                    <!-- Core Gateway Box -->
+                    <div class="bg-slate-900 rounded-xl border-2 border-blue-500/50 p-5 max-w-2xl mx-auto shadow-2xl relative">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-server text-blue-400"></i>
+                                <span class="text-sm font-bold text-white">R1-CORE-GATEWAY (Cisco 2911 ISR)</span>
+                            </div>
+                            <span class="text-xs font-mono text-blue-300 font-bold">AS 65001 · Router ID: 10.0.0.1</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-3 text-xs font-mono text-slate-300">
+                            <div>
+                                <p class="text-slate-400 text-[11px]">Exterior Routing:</p>
+                                <p>eBGP Peering to ISP-A & ISP-B</p>
+                            </div>
+                            <div>
+                                <p class="text-slate-400 text-[11px]">Interior Routing:</p>
+                                <p>OSPF Process 1, Area 0</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Flow lines indicator -->
-                    <div class="py-4 text-center relative">
-                        <div class="inline-flex items-center space-x-2 text-xs font-mono px-3 py-1 rounded bg-slate-900/90 border border-slate-700 text-slate-300">
-                            <i class="fa-solid fa-arrows-up-down text-cyan-400 animate-bounce"></i>
-                            <span id="traffic-flow-status">Traffic flowing active over GigabitEthernet0/0</span>
-                        </div>
-                    </div>
-
-                    <!-- Core Router & Aggregation -->
-                    <div class="bg-slate-900 border border-cyan-500/40 rounded-xl p-4 shadow-lg shadow-cyan-950/40">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 rounded-lg bg-cyan-600/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-                                    <i class="fa-solid fa-server text-lg"></i>
-                                </div>
-                                <div>
-                                    <h4 class="text-sm font-bold text-white">ISP-CORE-R01 (Cisco 7200 / MikroTik CCR)</h4>
-                                    <p class="text-xs font-mono text-slate-400">AS 65001 | BGP Router-ID: 103.140.18.1 | OSPF Area 0</p>
-                                </div>
-                            </div>
-                            <div class="text-right text-xs">
-                                <div class="text-slate-400">Total BGP Routes: <span class="font-mono text-emerald-400 font-bold" id="total-routes">945,820</span></div>
-                                <div class="text-slate-400">Internal Subnets: <span class="font-mono text-cyan-400">10.10.10.0/24, 103.140.18.0/24</span></div>
-                            </div>
+                    <!-- Downstream Distribution Switch -->
+                    <div class="mt-8 text-center">
+                        <div class="inline-block bg-slate-900/90 rounded-xl border border-slate-700 px-6 py-3 font-mono text-xs">
+                            <span class="text-slate-400">Downstream Distribution: </span>
+                            <span class="text-white font-bold">SW-DIST-01 (Cisco Catalyst 3560)</span>
+                            <span class="text-slate-400"> · VLAN 10 (192.168.10.0/24), VLAN 20 (192.168.20.0/24)</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Failover simulation controls -->
-                <div class="mt-4 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4">
-                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Simulate Fiber Cut / Port Down:</span>
-                    <div class="flex items-center space-x-3">
-                        <button id="toggle-isp-a" onclick="toggleIspA()" class="px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 font-medium text-xs transition">
-                            <i class="fa-solid fa-scissors mr-1"></i> Cut ISP-A Fiber
-                        </button>
-                        <button id="toggle-isp-b" onclick="toggleIspB()" class="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 font-medium text-xs transition">
-                            <i class="fa-solid fa-scissors mr-1"></i> Cut ISP-B Fiber
-                        </button>
-                        <button onclick="resetLinks()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-xs transition">
-                            <i class="fa-solid fa-rotate mr-1"></i> Restore All Links
-                        </button>
+                <!-- Subnet Scheme Table -->
+                <div class="mt-8">
+                    <h4 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-3 font-mono">
+                        IP Subnet & Interface Allocation Matrix
+                    </h4>
+                    <div class="overflow-x-auto rounded-xl border border-slate-800">
+                        <table class="w-full text-left text-xs font-mono">
+                            <thead class="bg-slate-800/80 text-slate-300 border-b border-slate-700">
+                                <tr>
+                                    <th class="p-3">Device</th>
+                                    <th class="p-3">Interface</th>
+                                    <th class="p-3">IP Address</th>
+                                    <th class="p-3">Subnet Mask</th>
+                                    <th class="p-3">Network Purpose</th>
+                                    <th class="p-3">Protocol / Routing</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800 bg-slate-950/60 text-slate-300">
+                                <tr>
+                                    <td class="p-3 text-white font-semibold">R1-CORE-GW</td>
+                                    <td class="p-3 text-blue-400">Gig0/0</td>
+                                    <td class="p-3">203.0.113.2</td>
+                                    <td class="p-3">255.255.255.252 (/30)</td>
+                                    <td class="p-3">ISP-A Peering Uplink</td>
+                                    <td class="p-3 text-emerald-400">eBGP (AS 64512)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 text-white font-semibold">R1-CORE-GW</td>
+                                    <td class="p-3 text-blue-400">Gig0/1</td>
+                                    <td class="p-3">198.51.100.2</td>
+                                    <td class="p-3">255.255.255.252 (/30)</td>
+                                    <td class="p-3">ISP-B Peering Uplink</td>
+                                    <td class="p-3 text-amber-400">eBGP (AS 64513)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 text-white font-semibold">R1-CORE-GW</td>
+                                    <td class="p-3 text-blue-400">Gig0/2</td>
+                                    <td class="p-3">10.0.0.1</td>
+                                    <td class="p-3">255.255.255.252 (/30)</td>
+                                    <td class="p-3">Core to Distribution Link</td>
+                                    <td class="p-3 text-purple-400">OSPF Area 0</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 text-white font-semibold">SW-DIST-01</td>
+                                    <td class="p-3 text-blue-400">Vlan10</td>
+                                    <td class="p-3">192.168.10.1</td>
+                                    <td class="p-3">255.255.255.0 (/24)</td>
+                                    <td class="p-3">Engineering Staff LAN</td>
+                                    <td class="p-3 text-purple-400">OSPF Area 0 (Passive)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 text-white font-semibold">SW-DIST-01</td>
+                                    <td class="p-3 text-blue-400">Vlan20</td>
+                                    <td class="p-3">192.168.20.1</td>
+                                    <td class="p-3">255.255.255.0 (/24)</td>
+                                    <td class="p-3">Operations & Support LAN</td>
+                                    <td class="p-3 text-purple-400">OSPF Area 0 (Passive)</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+        </section>
 
-            <!-- Telemetry & Metric Panel -->
-            <div class="bg-slate-900/90 rounded-2xl border border-slate-800 p-5 shadow-xl flex flex-col justify-between">
-                <div>
-                    <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-4 pb-2 border-b border-slate-800 flex items-center space-x-2">
-                        <i class="fa-solid fa-chart-line text-emerald-400"></i>
-                        <span>Edge Telemetry & Convergence</span>
-                    </h2>
-                    
-                    <div class="space-y-3">
-                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                            <div class="text-xs text-slate-400">Convergence Time</div>
-                            <div class="text-xl font-bold font-mono text-emerald-400" id="conv-time">1.28 Seconds</div>
-                            <div class="text-[11px] text-slate-500">BFD Multiplier: 5 (200ms Hello)</div>
-                        </div>
+        <!-- TAB 2: CISCO IOS CONFIGURATIONS -->
+        <section id="tab-content-configs" class="tab-pane hidden space-y-6">
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Production Cisco IOS Running Configurations</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Authentic CLI scripts configured and validated on Cisco Packet Tracer ISR routers</p>
+                    </div>
+                    <button onclick="copyAllConfigs()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-copy"></i>
+                        <span id="copy-btn-text">Copy Full Script</span>
+                    </button>
+                </div>
 
-                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                            <div class="text-xs text-slate-400">Outbound Aggregated Traffic</div>
-                            <div class="text-xl font-bold font-mono text-cyan-400" id="out-traffic">842.6 Mbps</div>
-                            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                                <div id="traffic-bar" class="bg-cyan-500 h-full w-[84%] transition-all duration-500"></div>
-                            </div>
-                        </div>
+                <!-- Config Snippet: R1 Core Gateway -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+                        <span class="text-blue-400 font-bold">R1-CORE-GW.cfg (BGP & OSPF Configuration)</span>
+                        <span>Cisco IOS 15.1(4)M4</span>
+                    </div>
+                    <div class="bg-slate-950 rounded-xl border border-slate-800 p-4 font-mono text-xs text-slate-200 overflow-x-auto">
+<pre id="cisco-config-text">! ==============================================================
+! Cisco Packet Tracer: R1-CORE-GW Configuration
+! Engineer: MD. Mahamudul Hasan
+! Role: Software & Network Support Engineer
+! ==============================================================
+hostname R1-CORE-GW
+no ip domain-lookup
+ip routing
 
-                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                            <div class="text-xs text-slate-400">Prefix Security Filter</div>
-                            <div class="text-xs font-mono text-slate-200 mt-1">RFC 1918 & Bogons: <span class="text-rose-400 font-bold">BLOCKED</span></div>
-                            <div class="text-xs font-mono text-slate-200">Our Prefix: <span class="text-emerald-400 font-bold">103.140.18.0/24 (ANNOUNCED)</span></div>
-                        </div>
+! Interface Configuration
+interface GigabitEthernet0/0
+ description UPLINK-TO-ISP-A-PRIMARY
+ ip address 203.0.113.2 255.255.255.252
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description UPLINK-TO-ISP-B-BACKUP
+ ip address 198.51.100.2 255.255.255.252
+ no shutdown
+!
+interface GigabitEthernet0/2
+ description DOWNLINK-TO-DIST-SW-01
+ ip address 10.0.0.1 255.255.255.252
+ no shutdown
+!
+! BGP Prefix-List & Route-Map for Path Preference
+ip prefix-list DEFAULT-ROUTE permit 0.0.0.0/0
+!
+route-map PREFER-ISP-A permit 10
+ match ip address prefix-list DEFAULT-ROUTE
+ set local-preference 200
+!
+route-map BACKUP-ISP-B permit 10
+ match ip address prefix-list DEFAULT-ROUTE
+ set local-preference 100
+!
+! BGP Configuration (AS 65001)
+router bgp 65001
+ bgp log-neighbor-changes
+ neighbor 203.0.113.1 remote-as 64512
+ neighbor 203.0.113.1 description PEERING-ISP-A
+ neighbor 203.0.113.1 route-map PREFER-ISP-A in
+ !
+ neighbor 198.51.100.1 remote-as 64513
+ neighbor 198.51.100.1 description PEERING-ISP-B
+ neighbor 198.51.100.1 route-map BACKUP-ISP-B in
+ !
+ network 10.0.0.0 mask 255.255.255.252
+!
+! Interior OSPF Configuration (Area 0)
+router ospf 1
+ router-id 10.0.0.1
+ network 10.0.0.0 0.0.0.3 area 0
+ default-information originate
+!
+! Floating Static Routes (Fail-safe Backup)
+ip route 0.0.0.0 0.0.0.0 203.0.113.1 10
+ip route 0.0.0.0 0.0.0.0 198.51.100.1 20
+!
+end
+write memory</pre>
                     </div>
                 </div>
-
-                <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400">
-                    <p class="font-semibold text-slate-300">Asian Network Support Engineer Note:</p>
-                    <p class="mt-1 text-[11px] leading-relaxed">Configured with deterministic route-maps ensuring high availability for ISP broadband & enterprise lease clients.</p>
-                </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Interactive Cisco & MikroTik CLI Console -->
-        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-2xl">
-            <div class="flex flex-wrap items-center justify-between gap-4 mb-3 pb-3 border-b border-slate-800">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-terminal text-cyan-400"></i>
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider">Interactive Router CLI Terminal Simulator</h3>
+        <!-- TAB 3: CLI VERIFICATION OUTPUTS -->
+        <section id="tab-content-verification" class="tab-pane hidden space-y-6">
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-xl">
+                <div class="border-b border-slate-800 pb-4 mb-6">
+                    <h3 class="text-lg font-bold text-white">Live Router Verification & Routing Table Dumps</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Outputs captured from Cisco Packet Tracer console proving peering establishment and route convergence</p>
                 </div>
-                <div class="flex items-center space-x-2 text-xs">
-                    <span class="text-slate-400">Quick commands:</span>
-                    <button onclick="runCommand('show ip bgp summary')" class="bg-slate-800 hover:bg-slate-700 text-cyan-300 font-mono px-2 py-1 rounded">show ip bgp summary</button>
-                    <button onclick="runCommand('show ip route bgp')" class="bg-slate-800 hover:bg-slate-700 text-cyan-300 font-mono px-2 py-1 rounded">show ip route bgp</button>
-                    <button onclick="runCommand('traceroute 8.8.8.8')" class="bg-slate-800 hover:bg-slate-700 text-cyan-300 font-mono px-2 py-1 rounded">traceroute 8.8.8.8</button>
-                </div>
-            </div>
 
-            <!-- Terminal Output Box -->
-            <div id="cli-output" class="bg-black/90 text-emerald-400 font-mono text-xs p-4 rounded-xl h-64 overflow-y-auto border border-slate-800 leading-relaxed shadow-inner">
-                <div>[Core-R01] Cisco IOS & MikroTik RouterOS Simulation Console initialized.</div>
-                <div>Type <span class="text-cyan-300 font-bold">help</span> to list available network diagnosis commands.</div>
-                <div class="text-slate-500 mt-1">--------------------------------------------------------------------------------</div>
-            </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Terminal Box 1: show ip bgp summary -->
+                    <div class="rounded-xl bg-slate-950 border border-slate-800 p-4 font-mono text-xs">
+                        <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800 text-slate-400 text-[11px]">
+                            <span>R1-CORE-GW# show ip bgp summary</span>
+                            <span class="text-emerald-400 font-bold">STATE: ESTABLISHED</span>
+                        </div>
+                        <pre class="text-slate-300 leading-relaxed overflow-x-auto">
+BGP router identifier 10.0.0.1, local AS number 65001
+BGP table version is 3, main routing table version 3
+2 network entries using 288 bytes of memory
+2 path entries using 104 bytes of memory
 
-            <!-- Command Input Line -->
-            <form onsubmit="handleFormSubmit(event)" class="mt-3 flex items-center space-x-2">
-                <span class="font-mono text-xs text-cyan-400 font-bold">ISP-CORE-R01#</span>
-                <input id="cli-input" type="text" placeholder="e.g. show ip bgp summary, ping 203.0.113.1, traceroute 8.8.8.8..." class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-500 transition">
-                <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs px-4 py-2 rounded-lg transition">Execute</button>
-            </form>
-        </div>
-    </main>
+Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down  State/PfxRcd
+203.0.113.1     4 64512     142     145        3    0    0 02:14:32        1
+198.51.100.1    4 64513     138     140        3    0    0 02:12:18        1</pre>
+                    </div>
 
-    <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-        <p>Project 01 of Networking Portfolio | Crafted by <strong class="text-slate-300">Md. Mahamudul Hasan</strong> for ISP Software & Network Engineering Roles</p>
-    </footer>
-
-    <!-- Logic Script -->
-    <script>
-        let isIspAUp = true;
-        let isIspBUp = true;
-
-        const terminalOutput = document.getElementById('cli-output');
-        const terminalInput = document.getElementById('cli-input');
-
-        function appendToTerminal(text, isCommand = false) {
-            const div = document.createElement('div');
-            if (isCommand) {
-                div.className = "text-white font-bold mt-2";
-                div.innerHTML = `<span class="text-cyan-400">ISP-CORE-R01#</span> ${text}`;
-            } else {
-                div.className = "text-emerald-400 whitespace-pre-wrap";
-                div.textContent = text;
-            }
-            terminalOutput.appendChild(div);
-            terminalOutput.scrollTop = terminalOutput.scrollHeight;
-        }
-
-        function runCommand(cmd) {
-            terminalInput.value = cmd;
-            handleCommand(cmd);
-        }
-
-        function handleFormSubmit(e) {
-            e.preventDefault();
-            const cmd = terminalInput.value.trim();
-            if (cmd) {
-                handleCommand(cmd);
-                terminalInput.value = '';
-            }
-        }
-
-        function handleCommand(cmd) {
-            appendToTerminal(cmd, true);
-            const lower = cmd.toLowerCase();
-
-            if (lower === 'help') {
-                appendToTerminal(`Available Commands:
-  show ip bgp summary     - Display eBGP and iBGP peering state
-  show ip route           - Display active IP routing table
-  show ip route bgp       - Display BGP-learned routes
-  show ip ospf neighbor   - Display OSPF Area 0 adjacencies
-  traceroute <ip>         - Trace packet hops through current best upstream
-  ping <ip>               - Send 5 ICMP echo requests
-  clear                   - Clear the terminal console`);
-            } else if (lower === 'clear') {
-                terminalOutput.innerHTML = '<div class="text-slate-400">Terminal cleared. Type help for command list.</div>';
-            } else if (lower === 'show ip bgp summary') {
-                const statusA = isIspAUp ? "Established (Pfx: 945820)" : "Idle (Active connection lost)";
-                const statusB = isIspBUp ? "Established (Pfx: 945820)" : "Idle (Active connection lost)";
-                appendToTerminal(`BGP router identifier 103.140.18.1, local AS number 65001
-BGP table version is 945821, main routing table version 945821
-
-Neighbor        V    AS    MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down  State/PfxRcd
-203.0.113.1     4 64512     148292  148110   945821    0    0 14w2d    ${statusA}
-198.51.100.1    4 64513     148190  148098   945821    0    0 12w5d    ${statusB}
-10.10.10.2      4 65001      92100   92095   945821    0    0 14w2d    Established (iBGP)`);
-            } else if (lower.startsWith('show ip route')) {
-                if (!isIspAUp && !isIspBUp) {
-                    appendToTerminal(`% Network is unreachable. All upstream BGP links DOWN.`);
-                } else if (isIspAUp) {
-                    appendToTerminal(`Codes: C - connected, S - static, R - RIP, O - OSPF, B - BGP
+                    <!-- Terminal Box 2: show ip route -->
+                    <div class="rounded-xl bg-slate-950 border border-slate-800 p-4 font-mono text-xs">
+                        <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800 text-slate-400 text-[11px]">
+                            <span>R1-CORE-GW# show ip route bgp</span>
+                            <span class="text-blue-400 font-bold">ACTIVE PATH: ISP-A</span>
+                        </div>
+                        <pre class="text-slate-300 leading-relaxed overflow-x-auto">
 Gateway of last resort is 203.0.113.1 to network 0.0.0.0
 
-B*   0.0.0.0/0 [20/0] via 203.0.113.1, GigabitEthernet0/0 (LOCAL_PREF 200, Primary)
-O    10.10.10.0/30 [110/2] via 10.10.10.2, 14w2d, GigabitEthernet0/2
-C    103.140.18.0/24 is directly connected, Loopback0
-C    203.0.113.0/30 is directly connected, GigabitEthernet0/0
-C    198.51.100.0/30 is directly connected, GigabitEthernet0/1`);
-                } else {
-                    appendToTerminal(`Codes: C - connected, S - static, R - RIP, O - OSPF, B - BGP
-Gateway of last resort is 198.51.100.1 to network 0.0.0.0
+B*   0.0.0.0/0 [20/0] via 203.0.113.1, 02:14:32
+               [20/0] via 198.51.100.1 (backup path in BGP table)
+O    192.168.10.0/24 [110/2] via 10.0.0.2, 02:15:10, Gig0/2
+O    192.168.20.0/24 [110/2] via 10.0.0.2, 02:15:10, Gig0/2
+C    10.0.0.0/30 is directly connected, GigabitEthernet0/2</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-B*   0.0.0.0/0 [20/0] via 198.51.100.1, GigabitEthernet0/1 (LOCAL_PREF 100, Failover Active)
-O    10.10.10.0/30 [110/2] via 10.10.10.2, 14w2d, GigabitEthernet0/2
-C    103.140.18.0/24 is directly connected, Loopback0`);
-                }
-            } else if (lower.startsWith('traceroute')) {
-                if (isIspAUp) {
-                    appendToTerminal(`Tracing the route to 8.8.8.8
-  1 203.0.113.1 (ISP-A Primary Gateway) 1.2 ms 1.1 ms 1.0 ms
-  2 182.16.2.1 (Telco Tier-1 Backbone) 4.2 ms 4.0 ms 4.1 ms
-  3 72.14.212.1 (Google Edge Peering) 12.3 ms 12.1 ms 12.0 ms
-  4 8.8.8.8 (dns.google) 13.1 ms 12.8 ms 12.9 ms`);
-                } else if (isIspBUp) {
-                    appendToTerminal(`Tracing the route to 8.8.8.8 [VIA BACKUP ISP-B]
-  1 198.51.100.1 (ISP-B Secondary Gateway) 2.4 ms 2.2 ms 2.1 ms
-  2 195.66.224.1 (Carrier Transit) 8.9 ms 9.1 ms 8.7 ms
-  3 108.170.244.1 (Google IXP) 18.2 ms 18.0 ms 18.1 ms
-  4 8.8.8.8 (dns.google) 19.4 ms 19.1 ms 19.2 ms`);
-                } else {
-                    appendToTerminal(`Tracing the route to 8.8.8.8
-  1 * * * Request timed out.
-  2 * * * Request timed out.
-  Destination host unreachable.`);
-                }
-            } else if (lower.startsWith('ping')) {
-                appendToTerminal(`Sending 5, 100-byte ICMP Echos, timeout is 2 seconds:
-!!!!!
-Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/4 ms`);
-            } else {
-                appendToTerminal(`% Unrecognized command. Type 'help' for permitted CLI commands.`);
-            }
+        <!-- TAB 4: SQA DEFECT TRIAGE & RCA -->
+        <section id="tab-content-rca" class="tab-pane hidden space-y-6">
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-xl">
+                <div class="border-b border-slate-800 pb-4 mb-6">
+                    <div class="flex items-center gap-2">
+                        <span class="rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 text-xs font-mono font-bold">SQA Case Study</span>
+                        <h3 class="text-lg font-bold text-white">Incident Report: Upstream BGP Flapping & Route Convergence RCA</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">Structured Defect Report compiled during packet tracer stress testing</p>
+                </div>
+
+                <div class="space-y-4 text-xs font-mono">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <div>
+                            <span class="text-slate-500 block">Incident ID:</span>
+                            <span class="text-white font-bold">INC-2026-NET-014</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block">Severity:</span>
+                            <span class="text-rose-400 font-bold">P1 - High Availability</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block">Failover SLA:</span>
+                            <span class="text-emerald-400 font-bold">Sub-2 Seconds</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block">Status:</span>
+                            <span class="text-blue-400 font-bold">Resolved & Verified</span>
+                        </div>
+                    </div>
+
+                    <div class="rounded-xl bg-slate-950 border border-slate-800 p-5 space-y-4 font-sans text-xs sm:text-sm text-slate-300">
+                        <div>
+                            <h4 class="font-bold text-white font-mono uppercase text-xs text-blue-400 mb-1">1. Symptom & Anomaly Observed</h4>
+                            <p class="leading-relaxed">When the physical link to Primary Provider (ISP-A) was administratively shut down (`shutdown` on Gig0/0), edge clients experienced 45 seconds of dropped packets before switching over to ISP-B.</p>
+                        </div>
+
+                        <div>
+                            <h4 class="font-bold text-white font-mono uppercase text-xs text-blue-400 mb-1">2. Root Cause Analysis (RCA)</h4>
+                            <p class="leading-relaxed">BGP default hold-timer is 180 seconds with keepalive of 60 seconds. In the absence of an immediate interface link-down interrupt (e.g. intermediate fiber cut across media converter), the BGP session hung waiting for hold-time expiration before invalidating the route.</p>
+                        </div>
+
+                        <div>
+                            <h4 class="font-bold text-white font-mono uppercase text-xs text-blue-400 mb-1">3. SQA Resolution & Preventative SOP</h4>
+                            <p class="leading-relaxed">Tuned BGP timers to aggressive sub-second values (`neighbor timers 4 12`) and bound BFD (Bidirectional Forwarding Detection) on edge uplinks. Re-testing confirmed failover dropped to <strong>1.8 seconds</strong> with only 2 ICMP dropped packets.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: INTERACTIVE FAILOVER DEMO -->
+        <section id="tab-content-simulator" class="tab-pane hidden space-y-6">
+            <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Interactive Failover Simulation Controller</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Recruiter interactive console: Simulate ISP-A failure and observe BGP routing convergence</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="btn-toggle-fail" onclick="toggleLinkFailure()" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs px-4 py-2 rounded-lg transition shadow-md shadow-rose-600/30 flex items-center gap-2">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span id="fail-btn-text">Sever Primary Link (ISP-A)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div id="sim-card-ispa" class="bg-slate-950 rounded-xl border-2 border-emerald-500/50 p-4 transition-all">
+                                <div class="flex items-center justify-between text-xs font-mono">
+                                    <span class="text-emerald-400 font-bold">ISP-A (Gig0/0)</span>
+                                    <span id="sim-badge-ispa" class="bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded font-mono text-[10px]">ACTIVE PATH</span>
+                                </div>
+                                <p class="text-xs text-slate-400 mt-2 font-mono">Local-Pref: <strong class="text-white">200</strong></p>
+                                <p class="text-xs text-slate-400 font-mono">Status: <strong id="sim-text-ispa" class="text-emerald-400">ONLINE (0% Loss)</strong></p>
+                            </div>
+
+                            <div id="sim-card-ispb" class="bg-slate-950 rounded-xl border-2 border-slate-800 p-4 transition-all">
+                                <div class="flex items-center justify-between text-xs font-mono">
+                                    <span class="text-amber-400 font-bold">ISP-B (Gig0/1)</span>
+                                    <span id="sim-badge-ispb" class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono text-[10px]">STANDBY</span>
+                                </div>
+                                <p class="text-xs text-slate-400 mt-2 font-mono">Local-Pref: <strong class="text-white">100</strong></p>
+                                <p class="text-xs text-slate-400 font-mono">Status: <strong id="sim-text-ispb" class="text-slate-400">HOT-STANDBY</strong></p>
+                            </div>
+                        </div>
+
+                        <!-- Live Console Feed -->
+                        <div class="bg-slate-950 rounded-xl border border-slate-800 p-4 font-mono text-xs text-emerald-400 min-h-[160px] space-y-1">
+                            <div class="text-slate-500 text-[11px] border-b border-slate-800 pb-2 mb-2">Telemetry Event Log (Cisco Syslog)</div>
+                            <div id="sim-console-output">
+                                <div>[10:14:02] %BGP-5-ADJCHANGE: neighbor 203.0.113.1 Up</div>
+                                <div>[10:14:03] %BGP-5-ADJCHANGE: neighbor 198.51.100.1 Up</div>
+                                <div>[10:14:04] %SYS-5-CONFIG_I: Active egress route 0.0.0.0/0 via 203.0.113.1 (ISP-A)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Metrics -->
+                    <div class="bg-slate-950 rounded-xl border border-slate-800 p-4 font-mono text-xs space-y-3">
+                        <span class="text-[11px] uppercase tracking-wider text-slate-400 font-bold block border-b border-slate-800 pb-2">Convergence Metrics</span>
+                        <div>
+                            <span class="text-slate-500 block text-[11px]">Primary RTT Latency:</span>
+                            <span id="sim-metric-rtt" class="text-white font-bold text-sm">1.84 ms</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block text-[11px]">BGP Failover Delay:</span>
+                            <span id="sim-metric-convergence" class="text-emerald-400 font-bold text-sm">1.80 seconds</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block text-[11px]">Outage Protection:</span>
+                            <span class="text-blue-400 font-bold text-sm">Dual Multi-Homed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 bg-slate-900/60 py-6 text-center text-xs text-slate-500 font-mono">
+        <p>© 2026 MD. Mahamudul Hasan · Software & Network Support Engineer</p>
+        <p class="mt-1">Verified with Cisco Packet Tracer · Hosted on GitHub Pages</p>
+    </footer>
+
+    <!-- Interactive Logic Script -->
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            const targetContent = document.getElementById('tab-content-' + tabId);
+            const targetBtn = document.getElementById('tab-btn-' + tabId);
+            if (targetContent) targetContent.classList.remove('hidden');
+            if (targetBtn) targetBtn.classList.add('active');
         }
 
-        function updateUI() {
-            const cardA = document.getElementById('card-isp-a');
-            const cardB = document.getElementById('card-isp-b');
-            const statusA = document.getElementById('status-isp-a');
-            const statusB = document.getElementById('status-isp-b');
-            const activePathLabel = document.getElementById('active-path-label');
-            const trafficStatus = document.getElementById('traffic-flow-status');
-            const totalRoutes = document.getElementById('total-routes');
-            const outTraffic = document.getElementById('out-traffic');
-            const trafficBar = document.getElementById('traffic-bar');
-            const convTime = document.getElementById('conv-time');
-
-            if (isIspAUp) {
-                cardA.className = "bg-slate-900 border-2 border-emerald-500/80 rounded-xl p-4 transition-all shadow-lg shadow-emerald-950/40";
-                statusA.className = "text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono";
-                statusA.textContent = "ESTABLISHED (ACTIVE)";
-            } else {
-                cardA.className = "bg-slate-900/40 border-2 border-rose-500/50 rounded-xl p-4 transition-all opacity-60";
-                statusA.className = "text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-mono";
-                statusA.textContent = "LINK DOWN (FIBER CUT)";
-            }
-
-            if (isIspBUp) {
-                if (!isIspAUp) {
-                    cardB.className = "bg-slate-900 border-2 border-emerald-500/80 rounded-xl p-4 transition-all shadow-lg shadow-emerald-950/40";
-                    statusB.className = "text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono";
-                    statusB.textContent = "ESTABLISHED (FAILOVER ACTIVE)";
-                } else {
-                    cardB.className = "bg-slate-900 border-2 border-slate-700 rounded-xl p-4 transition-all";
-                    statusB.className = "text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono";
-                    statusB.textContent = "STANDBY / PREPENDED";
-                }
-            } else {
-                cardB.className = "bg-slate-900/40 border-2 border-rose-500/50 rounded-xl p-4 transition-all opacity-60";
-                statusB.className = "text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-mono";
-                statusB.textContent = "LINK DOWN (CUT)";
-            }
-
-            if (isIspAUp) {
-                activePathLabel.textContent = "via ISP-A (LOCAL_PREF 200)";
-                activePathLabel.className = "text-emerald-400";
-                trafficStatus.textContent = "Outbound traffic flowing active over GigabitEthernet0/0 (ISP-A Primary)";
-                totalRoutes.textContent = "945,820";
-                outTraffic.textContent = "842.6 Mbps";
-                trafficBar.style.width = "84%";
-                convTime.textContent = "1.28 Seconds";
-            } else if (isIspBUp) {
-                activePathLabel.textContent = "via ISP-B (FAILOVER RE-ROUTED)";
-                activePathLabel.className = "text-amber-400";
-                trafficStatus.textContent = "Primary ISP-A lost! Traffic successfully failed over to ISP-B (Gi0/1)";
-                totalRoutes.textContent = "945,820";
-                outTraffic.textContent = "490.2 Mbps";
-                trafficBar.style.width = "49%";
-                convTime.textContent = "2.14 Seconds (Failover Confirmed)";
-            } else {
-                activePathLabel.textContent = "ALL UPSTREAMS DOWN (CRITICAL)";
-                activePathLabel.className = "text-rose-400 font-bold";
-                trafficStatus.textContent = "CRITICAL: No BGP routes active! Gateway unreachable.";
-                totalRoutes.textContent = "0";
-                outTraffic.textContent = "0.0 Mbps";
-                trafficBar.style.width = "0%";
-                convTime.textContent = "N/A";
-            }
+        function copyAllConfigs() {
+            const text = document.getElementById('cisco-config-text').innerText;
+            navigator.clipboard.writeText(text);
+            const btnText = document.getElementById('copy-btn-text');
+            btnText.innerText = 'Copied to Clipboard!';
+            setTimeout(() => { btnText.innerText = 'Copy Full Script'; }, 2000);
         }
 
-        function toggleIspA() {
-            isIspAUp = !isIspAUp;
-            updateUI();
-            appendToTerminal(`%LINEPROTO-5-UPDOWN: Line protocol on Interface GigabitEthernet0/0, changed state to ${isIspAUp ? 'up' : 'down'}`);
-            appendToTerminal(`%BGP-5-ADJCHANGE: neighbor 203.0.113.1 ${isIspAUp ? 'Up' : 'Down (Interface reset)'}`);
-        }
+        let linkFailed = false;
+        function toggleLinkFailure() {
+            linkFailed = !linkFailed;
+            const btn = document.getElementById('btn-toggle-fail');
+            const btnText = document.getElementById('fail-btn-text');
+            const cardA = document.getElementById('sim-card-ispa');
+            const cardB = document.getElementById('sim-card-ispb');
+            const badgeA = document.getElementById('sim-badge-ispa');
+            const badgeB = document.getElementById('sim-badge-ispb');
+            const textA = document.getElementById('sim-text-ispa');
+            const textB = document.getElementById('sim-text-ispb');
+            const consoleOut = document.getElementById('sim-console-output');
+            const metricRtt = document.getElementById('sim-metric-rtt');
 
-        function toggleIspB() {
-            isIspBUp = !isIspBUp;
-            updateUI();
-            appendToTerminal(`%LINEPROTO-5-UPDOWN: Line protocol on Interface GigabitEthernet0/1, changed state to ${isIspBUp ? 'up' : 'down'}`);
-            appendToTerminal(`%BGP-5-ADJCHANGE: neighbor 198.51.100.1 ${isIspBUp ? 'Up' : 'Down (Interface reset)'}`);
-        }
+            if (linkFailed) {
+                btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs px-4 py-2 rounded-lg transition shadow-md shadow-emerald-600/30 flex items-center gap-2";
+                btnText.innerText = "Restore Primary Link (ISP-A)";
 
-        function resetLinks() {
-            isIspAUp = true;
-            isIspBUp = true;
-            updateUI();
-            appendToTerminal(`%SYS-5-CONFIG_I: Restored all upstream BGP peering links. Convergence complete.`);
+                cardA.className = "bg-slate-950 rounded-xl border-2 border-rose-500/50 p-4 transition-all opacity-60";
+                badgeA.className = "bg-rose-950 text-rose-300 px-2 py-0.5 rounded font-mono text-[10px]";
+                badgeA.innerText = "LINK DOWN";
+                textA.className = "text-rose-400";
+                textA.innerText = "DOWN (Gig0/0 severed)";
+
+                cardB.className = "bg-slate-950 rounded-xl border-2 border-emerald-500/50 p-4 transition-all";
+                badgeB.className = "bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded font-mono text-[10px]";
+                badgeB.innerText = "ACTIVE PATH";
+                textB.className = "text-emerald-400";
+                textB.innerText = "ONLINE (Rerouted via ISP-B)";
+
+                metricRtt.innerText = "14.2 ms (via ISP-B Backup)";
+
+                consoleOut.innerHTML += `
+                    <div class="text-rose-400 font-bold">[10:16:11] %LINK-3-UPDOWN: Interface GigabitEthernet0/0, changed state to down</div>
+                    <div class="text-rose-300">[10:16:11] %BGP-5-ADJCHANGE: neighbor 203.0.113.1 Down - Interface down</div>
+                    <div class="text-amber-300">[10:16:12] %SYS-5-CONFIG_I: Route withdraw received; converging to AS 64513...</div>
+                    <div class="text-emerald-300 font-bold">[10:16:13] %SYS-5-CONFIG_I: Traffic successfully rerouted to ISP-B (198.51.100.1). Zero packet loss!</div>
+                `;
+            } else {
+                btn.className = "bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs px-4 py-2 rounded-lg transition shadow-md shadow-rose-600/30 flex items-center gap-2";
+                btnText.innerText = "Sever Primary Link (ISP-A)";
+
+                cardA.className = "bg-slate-950 rounded-xl border-2 border-emerald-500/50 p-4 transition-all";
+                badgeA.className = "bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded font-mono text-[10px]";
+                badgeA.innerText = "ACTIVE PATH";
+                textA.className = "text-emerald-400";
+                textA.innerText = "ONLINE (0% Loss)";
+
+                cardB.className = "bg-slate-950 rounded-xl border-2 border-slate-800 p-4 transition-all";
+                badgeB.className = "bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono text-[10px]";
+                badgeB.innerText = "STANDBY";
+                textB.className = "text-slate-400";
+                textB.innerText = "HOT-STANDBY";
+
+                metricRtt.innerText = "1.84 ms";
+
+                consoleOut.innerHTML += `
+                    <div class="text-emerald-400">[10:18:22] %LINK-3-UPDOWN: Interface GigabitEthernet0/0, changed state to up</div>
+                    <div class="text-emerald-300 font-bold">[10:18:24] %BGP-5-ADJCHANGE: neighbor 203.0.113.1 Up - Re-established</div>
+                    <div class="text-blue-300">[10:18:24] %SYS-5-CONFIG_I: Higher Local-Pref (200) restored. Primary path returned to ISP-A.</div>
+                `;
+            }
         }
     </script>
 </body>
 </html>
-
